@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finora - Budget Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .modal-backdrop {
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-full">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-blue-600">Finora</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <!-- Language Selector -->
+                    <div class="relative">
+                        <select id="languageSelect" class="appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="en">🌐 EN</option>
+                            <option value="tr">🌐 TR</option>
+                            <option value="de">🌐 DE</option>
+                            <option value="mk">🌐 MK</option>
+                        </select>
+                    </div>
+                    <!-- Currency Selector -->
+                    <div class="relative">
+                        <select id="currencySelect" class="appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="USD">💱 $</option>
+                            <option value="EUR">💱 €</option>
+                            <option value="TRY">💱 ₺</option>
+                            <option value="MKD">💱 ден</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Dashboard Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Total Income -->
+            <div class="bg-white rounded-xl p-6 card-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600" data-translate="totalIncome">Total Income</p>
+                        <p class="text-2xl font-bold text-green-600" id="totalIncomeAmount">$0.00</p>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-full">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Expense -->
+            <div class="bg-white rounded-xl p-6 card-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600" data-translate="totalExpense">Total Expense</p>
+                        <p class="text-2xl font-bold text-red-600" id="totalExpenseAmount">$0.00</p>
+                    </div>
+                    <div class="bg-red-100 p-3 rounded-full">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Balance -->
+            <div class="bg-white rounded-xl p-6 card-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600" data-translate="balance">Balance</p>
+                        <p class="text-2xl font-bold text-blue-600" id="balanceAmount">$0.00</p>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Transaction Button -->
+        <div class="mb-8">
+            <button id="addTransactionBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-xl transition-colors duration-200" data-translate="addTransaction">
+                Add Transaction
+            </button>
+        </div>
+
+        <!-- Smart Suggestions -->
+        <div class="bg-white rounded-xl p-6 card-shadow mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4" data-translate="smartInsights">Smart Insights</h3>
+            <div id="suggestionsContainer" class="space-y-3">
+                <!-- Suggestions will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="bg-white rounded-xl p-6 card-shadow mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-semibold text-gray-900" data-translate="transactionHistory">Transaction History</h3>
+                <div class="flex space-x-2">
+                    <select id="filterPeriod" class="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all" data-translate="allTime">All Time</option>
+                        <option value="thisWeek" data-translate="thisWeek">This Week</option>
+                        <option value="thisMonth" data-translate="thisMonth">This Month</option>
+                        <option value="lastWeek" data-translate="lastWeek">Last Week</option>
+                        <option value="lastMonth" data-translate="lastMonth">Last Month</option>
+                    </select>
+                    <select id="filterType" class="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all" data-translate="all">All</option>
+                        <option value="income" data-translate="income">Income</option>
+                        <option value="expense" data-translate="expense">Expense</option>
+                    </select>
+                    <select id="filterCategory" class="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all" data-translate="allCategories">All Categories</option>
+                    </select>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="text-left py-3 px-4 font-medium text-gray-700" data-translate="date">Date</th>
+                            <th class="text-left py-3 px-4 font-medium text-gray-700" data-translate="type">Type</th>
+                            <th class="text-left py-3 px-4 font-medium text-gray-700" data-translate="category">Category</th>
+                            <th class="text-left py-3 px-4 font-medium text-gray-700" data-translate="amount">Amount</th>
+                            <th class="text-left py-3 px-4 font-medium text-gray-700" data-translate="note">Note</th>
+                            <th class="text-left py-3 px-4 font-medium text-gray-700" data-translate="actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionTableBody">
+                        <!-- Transactions will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="noTransactions" class="text-center py-8 text-gray-500 hidden">
+                <p data-translate="noTransactionsFound">No transactions found</p>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Expense Categories Chart -->
+            <div class="bg-white rounded-xl p-6 card-shadow">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4" data-translate="expenseCategories">Expense Categories</h3>
+                <div class="relative h-64">
+                    <canvas id="expensePieChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Weekly Spending Chart -->
+            <div class="bg-white rounded-xl p-6 card-shadow">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4" data-translate="weeklySpending">Weekly Spending</h3>
+                <div class="relative h-64">
+                    <canvas id="weeklyBarChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Transaction Modal -->
+    <div id="transactionModal" class="fixed inset-0 bg-black bg-opacity-50 modal-backdrop hidden z-50">
+        <div class="flex items-center justify-center min-h-full p-4">
+            <div class="bg-white rounded-xl max-w-md w-full p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900" data-translate="addTransaction">Add Transaction</h2>
+                    <button id="closeModal" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <form id="transactionForm">
+                    <!-- Transaction Type -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-translate="type">Type</label>
+                        <div class="flex space-x-4">
+                            <label class="flex items-center">
+                                <input type="radio" name="type" value="income" class="text-blue-600 focus:ring-blue-500" checked>
+                                <span class="ml-2 text-sm text-gray-700" data-translate="income">Income</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="type" value="expense" class="text-blue-600 focus:ring-blue-500">
+                                <span class="ml-2 text-sm text-gray-700" data-translate="expense">Expense</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Category -->
+                    <div class="mb-4">
+                        <label for="category" class="block text-sm font-medium text-gray-700 mb-2" data-translate="category">Category</label>
+                        <select id="category" name="category" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            <option value="" data-translate="selectCategory">Select Category</option>
+                        </select>
+                    </div>
+
+                    <!-- Amount -->
+                    <div class="mb-4">
+                        <label for="amount" class="block text-sm font-medium text-gray-700 mb-2" data-translate="amount">Amount</label>
+                        <input type="number" id="amount" name="amount" step="0.01" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+
+                    <!-- Date -->
+                    <div class="mb-4">
+                        <label for="date" class="block text-sm font-medium text-gray-700 mb-2" data-translate="date">Date</label>
+                        <input type="date" id="date" name="date" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+
+                    <!-- Note -->
+                    <div class="mb-6">
+                        <label for="note" class="block text-sm font-medium text-gray-700 mb-2" data-translate="note">Note</label>
+                        <textarea id="note" name="note" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Optional note..."></textarea>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200" data-translate="addTransaction">
+                        Add Transaction
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Language translations
+        const translations = {
+            en: {
+                totalIncome: "Total Income",
+                totalExpense: "Total Expense",
+                balance: "Balance",
+                addTransaction: "Add Transaction",
+                smartInsights: "Smart Insights",
+                expenseCategories: "Expense Categories",
+                weeklySpending: "Weekly Spending",
+                transactionHistory: "Transaction History",
+                type: "Type",
+                income: "Income",
+                expense: "Expense",
+                category: "Category",
+                selectCategory: "Select Category",
+                amount: "Amount",
+                date: "Date",
+                note: "Note",
+                actions: "Actions",
+                all: "All",
+                allCategories: "All Categories",
+                noTransactionsFound: "No transactions found",
+                delete: "Delete",
+                confirmDelete: "Are you sure you want to delete?",
+                cancel: "Cancel",
+                allTime: "All Time",
+                thisWeek: "This Week",
+                thisMonth: "This Month",
+                lastWeek: "Last Week",
+                lastMonth: "Last Month",
+                // Income Categories
+                salary: "Salary",
+                extraIncome: "Extra Income",
+                rentalIncome: "Rental Income",
+                interestIncome: "Interest Income",
+                otherIncome: "Other Income",
+                // Mandatory Expenses
+                housing: "Housing (Rent/Mortgage)",
+                utilities: "Utilities (Electric, Water, Gas)",
+                transportation: "Transportation",
+                food: "Food",
+                healthcare: "Healthcare",
+                debts: "Debts",
+                // Discretionary Expenses
+                diningOut: "Dining Out",
+                entertainment: "Entertainment",
+                clothing: "Clothing",
+                personalCare: "Personal Care",
+                subscriptions: "Subscriptions",
+                travel: "Travel",
+                otherExpenses: "Other Expenses",
+                // Savings & Investment
+                savings: "Savings",
+                investment: "Investment"
+            },
+            tr: {
+                totalIncome: "Toplam Gelir",
+                totalExpense: "Toplam Gider",
+                balance: "Bakiye",
+                addTransaction: "İşlem Ekle",
+                smartInsights: "Akıllı Öneriler",
+                expenseCategories: "Gider Kategorileri",
+                weeklySpending: "Haftalık Harcama",
+                transactionHistory: "İşlem Geçmişi",
+                type: "Tür",
+                income: "Gelir",
+                expense: "Gider",
+                category: "Kategori",
+                selectCategory: "Kategori Seçin",
+                amount: "Tutar",
+                date: "Tarih",
+                note: "Not",
+                actions: "İşlemler",
+                all: "Tümü",
+                allCategories: "Tüm Kategoriler",
+                noTransactionsFound: "İşlem bulunamadı",
+                delete: "Sil",
+                confirmDelete: "Silmek istediğinizden emin misiniz?",
+                cancel: "İptal",
+                allTime: "Tüm Zamanlar",
+                thisWeek: "Bu Hafta",
+                thisMonth: "Bu Ay",
+                lastWeek: "Geçen Hafta",
+                lastMonth: "Geçen Ay",
+                // Gelir Kategorileri
+                salary: "Maaş",
+                extraIncome: "Ek Gelir",
+                rentalIncome: "Kira Geliri",
+                interestIncome: "Faiz Geliri",
+                otherIncome: "Diğer Gelir",
+                // Zorunlu Giderler
+                housing: "Konut (Kira/Kredi)",
+                utilities: "Faturalar (Elektrik, Su, Doğalgaz)",
+                transportation: "Ulaşım",
+                food: "Gıda",
+                healthcare: "Sağlık",
+                debts: "Borçlar",
+                // İhtiyari Giderler
+                diningOut: "Yeme-İçme",
+                entertainment: "Eğlence",
+                clothing: "Giyim",
+                personalCare: "Kişisel Bakım",
+                subscriptions: "Abonelikler",
+                travel: "Seyahat",
+                otherExpenses: "Diğer",
+                // Tasarruf ve Yatırım
+                savings: "Tasarruf",
+                investment: "Yatırım"
+            },
+            de: {
+                totalIncome: "Gesamteinkommen",
+                totalExpense: "Gesamtausgaben",
+                balance: "Saldo",
+                addTransaction: "Transaktion hinzufügen",
+                smartInsights: "Intelligente Einblicke",
+                expenseCategories: "Ausgabenkategorien",
+                weeklySpending: "Wöchentliche Ausgaben",
+                transactionHistory: "Transaktionsverlauf",
+                type: "Typ",
+                income: "Einkommen",
+                expense: "Ausgabe",
+                category: "Kategorie",
+                selectCategory: "Kategorie auswählen",
+                amount: "Betrag",
+                date: "Datum",
+                note: "Notiz",
+                actions: "Aktionen",
+                all: "Alle",
+                allCategories: "Alle Kategorien",
+                noTransactionsFound: "Keine Transaktionen gefunden",
+                delete: "Löschen",
+                confirmDelete: "Sind Sie sicher, dass Sie löschen möchten?",
+                cancel: "Abbrechen",
+                allTime: "Alle Zeit",
+                thisWeek: "Diese Woche",
+                thisMonth: "Dieser Monat",
+                lastWeek: "Letzte Woche",
+                lastMonth: "Letzter Monat",
+                // Einkommenskategorien
+                salary: "Gehalt",
+                extraIncome: "Zusatzeinkommen",
+                rentalIncome: "Mieteinkommen",
+                interestIncome: "Zinseinkommen",
+                otherIncome: "Sonstiges Einkommen",
+                // Pflichtausgaben
+                housing: "Wohnen (Miete/Hypothek)",
+                utilities: "Nebenkosten (Strom, Wasser, Gas)",
+                transportation: "Transport",
+                food: "Lebensmittel",
+                healthcare: "Gesundheit",
+                debts: "Schulden",
+                // Freiwillige Ausgaben
+                diningOut: "Auswärts essen",
+                entertainment: "Unterhaltung",
+                clothing: "Kleidung",
+                personalCare: "Körperpflege",
+                subscriptions: "Abonnements",
+                travel: "Reisen",
+                otherExpenses: "Sonstige Ausgaben",
+                // Sparen und Investitionen
+                savings: "Sparen",
+                investment: "Investition"
+            },
+            mk: {
+                totalIncome: "Вкупен приход",
+                totalExpense: "Вкупен трошок",
+                balance: "Биланс",
+                addTransaction: "Додај трансакција",
+                smartInsights: "Паметни увиди",
+                expenseCategories: "Категории трошоци",
+                weeklySpending: "Неделно трошење",
+                transactionHistory: "Историја на трансакции",
+                type: "Тип",
+                income: "Приход",
+                expense: "Трошок",
+                category: "Категорија",
+                selectCategory: "Избери категорија",
+                amount: "Износ",
+                date: "Датум",
+                note: "Забелешка",
+                actions: "Акции",
+                all: "Сите",
+                allCategories: "Сите категории",
+                noTransactionsFound: "Не се пронајдени трансакции",
+                delete: "Избриши",
+                confirmDelete: "Дали сте сигурни дека сакате да избришете?",
+                cancel: "Откажи",
+                allTime: "Сето време",
+                thisWeek: "Оваа недела",
+                thisMonth: "Овој месец",
+                lastWeek: "Минатата недела",
+                lastMonth: "Минатиот месец",
+                // Категории приходи
+                salary: "Плата",
+                extraIncome: "Дополнителен приход",
+                rentalIncome: "Приход од кирија",
+                interestIncome: "Приход од камата",
+                otherIncome: "Друг приход",
+                // Задолжителни трошоци
+                housing: "Домување (Кирија/Кредит)",
+                utilities: "Сметки (Струја, Вода, Гас)",
+                transportation: "Транспорт",
+                food: "Храна",
+                healthcare: "Здравство",
+                debts: "Долгови",
+                // Избирливи трошоци
+                diningOut: "Јадење надвор",
+                entertainment: "Забава",
+                clothing: "Облека",
+                personalCare: "Лична нега",
+                subscriptions: "Претплати",
+                travel: "Патување",
+                otherExpenses: "Други трошоци",
+                // Штедење и инвестиции
+                savings: "Штедење",
+                investment: "Инвестиција"
+            }
+        };
+
+        // Currency symbols
+        const currencySymbols = {
+            USD: '$',
+            EUR: '€',
+            TRY: '₺',
+            MKD: 'ден'
+        };
+
+        // App state
+        let currentLanguage = localStorage.getItem('finora_language') || 'en';
+        let currentCurrency = localStorage.getItem('finora_currency') || 'USD';
+        let transactions = JSON.parse(localStorage.getItem('finora_transactions')) || [];
+        let expensePieChart = null;
+        let weeklyBarChart = null;
+
+        // Categories
+        const incomeCategories = ['salary', 'extraIncome', 'rentalIncome', 'interestIncome', 'otherIncome'];
+        const expenseCategories = [
+            // Zorunlu Giderler
+            'housing', 'utilities', 'transportation', 'food', 'healthcare', 'debts',
+            // İhtiyari Giderler
+            'diningOut', 'entertainment', 'clothing', 'personalCare', 'subscriptions', 'travel', 'otherExpenses',
+            // Tasarruf ve Yatırım
+            'savings', 'investment'
+        ];
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            loadMockDataIfEmpty();
+            updateUI();
+            initializeCharts();
+            updateCharts();
+            generateSmartSuggestions();
+        });
+
+        function initializeApp() {
+            // Set initial language and currency
+            document.getElementById('languageSelect').value = currentLanguage;
+            document.getElementById('currencySelect').value = currentCurrency;
+            
+            // Set today's date as default
+            document.getElementById('date').value = new Date().toISOString().split('T')[0];
+            
+            // Event listeners
+            document.getElementById('languageSelect').addEventListener('change', changeLanguage);
+            document.getElementById('currencySelect').addEventListener('change', changeCurrency);
+            document.getElementById('addTransactionBtn').addEventListener('click', openModal);
+            document.getElementById('closeModal').addEventListener('click', closeModal);
+            document.getElementById('transactionModal').addEventListener('click', function(e) {
+                if (e.target === this) closeModal();
+            });
+            document.getElementById('transactionForm').addEventListener('submit', addTransaction);
+            document.getElementById('filterPeriod').addEventListener('change', updateTransactionTable);
+            document.getElementById('filterType').addEventListener('change', updateTransactionTable);
+            document.getElementById('filterCategory').addEventListener('change', updateTransactionTable);
+            
+            // Transaction type change listener
+            document.querySelectorAll('input[name="type"]').forEach(radio => {
+                radio.addEventListener('change', updateCategoryOptions);
+            });
+            
+            updateLanguage();
+            updateCategoryOptions();
+            updateFilterCategories();
+        }
+
+        function loadMockDataIfEmpty() {
+            if (transactions.length === 0) {
+                const today = new Date();
+                const thisWeek = new Date(today.getTime() - (Math.random() * 7 * 24 * 60 * 60 * 1000));
+                const lastWeek = new Date(today.getTime() - (7 + Math.random() * 7) * 24 * 60 * 60 * 1000);
+                const thisMonth = new Date(today.getFullYear(), today.getMonth(), Math.floor(Math.random() * today.getDate()) + 1);
+                
+                const mockTransactions = [
+                    { id: 1, type: 'income', category: 'salary', amount: 3000, date: thisMonth.toISOString().split('T')[0], note: 'Monthly salary' },
+                    { id: 2, type: 'expense', category: 'food', amount: 150, date: thisWeek.toISOString().split('T')[0], note: 'Groceries' },
+                    { id: 3, type: 'expense', category: 'transportation', amount: 80, date: thisWeek.toISOString().split('T')[0], note: 'Gas' },
+                    { id: 4, type: 'expense', category: 'entertainment', amount: 50, date: lastWeek.toISOString().split('T')[0], note: 'Movie tickets' },
+                    { id: 5, type: 'income', category: 'extraIncome', amount: 500, date: thisMonth.toISOString().split('T')[0], note: 'Freelance project' },
+                    { id: 6, type: 'expense', category: 'clothing', amount: 200, date: lastWeek.toISOString().split('T')[0], note: 'New clothes' },
+                    { id: 7, type: 'expense', category: 'housing', amount: 1200, date: thisMonth.toISOString().split('T')[0], note: 'Monthly rent' },
+                    { id: 8, type: 'expense', category: 'utilities', amount: 120, date: thisMonth.toISOString().split('T')[0], note: 'Electric bill' },
+                    { id: 9, type: 'expense', category: 'diningOut', amount: 45, date: thisWeek.toISOString().split('T')[0], note: 'Restaurant dinner' },
+                    { id: 10, type: 'expense', category: 'savings', amount: 300, date: thisMonth.toISOString().split('T')[0], note: 'Monthly savings' }
+                ];
+                transactions = mockTransactions;
+                saveTransactions();
+            }
+        }
+
+        function changeLanguage() {
+            currentLanguage = this.value;
+            localStorage.setItem('finora_language', currentLanguage);
+            updateLanguage();
+            updateCategoryOptions();
+            updateFilterCategories();
+            updateTransactionTable();
+            updateCharts();
+            generateSmartSuggestions();
+        }
+
+        function changeCurrency() {
+            currentCurrency = this.value;
+            localStorage.setItem('finora_currency', currentCurrency);
+            updateUI();
+            updateCharts();
+        }
+
+        function updateLanguage() {
+            const elements = document.querySelectorAll('[data-translate]');
+            elements.forEach(element => {
+                const key = element.getAttribute('data-translate');
+                if (translations[currentLanguage] && translations[currentLanguage][key]) {
+                    element.textContent = translations[currentLanguage][key];
+                }
+            });
+        }
+
+        function updateCategoryOptions() {
+            const categorySelect = document.getElementById('category');
+            const selectedType = document.querySelector('input[name="type"]:checked').value;
+            const categories = selectedType === 'income' ? incomeCategories : expenseCategories;
+            
+            categorySelect.innerHTML = `<option value="" data-translate="selectCategory">${translations[currentLanguage].selectCategory}</option>`;
+            
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = translations[currentLanguage][category];
+                categorySelect.appendChild(option);
+            });
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: currentCurrency,
+                currencyDisplay: 'symbol'
+            }).format(amount).replace(/[A-Z]{3}/, currencySymbols[currentCurrency]);
+        }
+
+        function updateUI() {
+            const totalIncome = transactions
+                .filter(t => t.type === 'income')
+                .reduce((sum, t) => sum + t.amount, 0);
+            
+            const totalExpense = transactions
+                .filter(t => t.type === 'expense')
+                .reduce((sum, t) => sum + t.amount, 0);
+            
+            const balance = totalIncome - totalExpense;
+            
+            document.getElementById('totalIncomeAmount').textContent = formatCurrency(totalIncome);
+            document.getElementById('totalExpenseAmount').textContent = formatCurrency(totalExpense);
+            document.getElementById('balanceAmount').textContent = formatCurrency(balance);
+            
+            updateTransactionTable();
+        }
+
+        function openModal() {
+            document.getElementById('transactionModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('transactionModal').classList.add('hidden');
+            document.getElementById('transactionForm').reset();
+            document.getElementById('date').value = new Date().toISOString().split('T')[0];
+        }
+
+        function addTransaction(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const transaction = {
+                id: Date.now(),
+                type: formData.get('type'),
+                category: formData.get('category'),
+                amount: parseFloat(formData.get('amount')),
+                date: formData.get('date'),
+                note: formData.get('note') || ''
+            };
+            
+            transactions.push(transaction);
+            saveTransactions();
+            updateUI();
+            updateCharts();
+            generateSmartSuggestions();
+            closeModal();
+        }
+
+        function saveTransactions() {
+            localStorage.setItem('finora_transactions', JSON.stringify(transactions));
+        }
+
+        function updateFilterCategories() {
+            const filterCategory = document.getElementById('filterCategory');
+            const allCategories = [...new Set(transactions.map(t => t.category))];
+            
+            filterCategory.innerHTML = `<option value="all" data-translate="allCategories">${translations[currentLanguage].allCategories}</option>`;
+            
+            allCategories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = translations[currentLanguage][category] || category;
+                filterCategory.appendChild(option);
+            });
+        }
+
+        function updateTransactionTable() {
+            const tbody = document.getElementById('transactionTableBody');
+            const noTransactions = document.getElementById('noTransactions');
+            const filterPeriod = document.getElementById('filterPeriod').value;
+            const filterType = document.getElementById('filterType').value;
+            const filterCategory = document.getElementById('filterCategory').value;
+            
+            let filteredTransactions = transactions;
+            
+            // Period filter
+            if (filterPeriod !== 'all') {
+                const today = new Date();
+                const startOfWeek = new Date(today);
+                startOfWeek.setDate(today.getDate() - today.getDay());
+                const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                const startOfLastWeek = new Date(startOfWeek);
+                startOfLastWeek.setDate(startOfWeek.getDate() - 7);
+                const endOfLastWeek = new Date(startOfWeek);
+                endOfLastWeek.setDate(startOfWeek.getDate() - 1);
+                const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                
+                filteredTransactions = filteredTransactions.filter(t => {
+                    const transactionDate = new Date(t.date);
+                    switch (filterPeriod) {
+                        case 'thisWeek':
+                            return transactionDate >= startOfWeek && transactionDate <= today;
+                        case 'thisMonth':
+                            return transactionDate >= startOfMonth && transactionDate <= today;
+                        case 'lastWeek':
+                            return transactionDate >= startOfLastWeek && transactionDate <= endOfLastWeek;
+                        case 'lastMonth':
+                            return transactionDate >= startOfLastMonth && transactionDate <= endOfLastMonth;
+                        default:
+                            return true;
+                    }
+                });
+            }
+            
+            if (filterType !== 'all') {
+                filteredTransactions = filteredTransactions.filter(t => t.type === filterType);
+            }
+            
+            if (filterCategory !== 'all') {
+                filteredTransactions = filteredTransactions.filter(t => t.category === filterCategory);
+            }
+            
+            // Sort by date (newest first)
+            filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            if (filteredTransactions.length === 0) {
+                tbody.innerHTML = '';
+                noTransactions.classList.remove('hidden');
+                return;
+            }
+            
+            noTransactions.classList.add('hidden');
+            
+            tbody.innerHTML = filteredTransactions.map(transaction => `
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="py-3 px-4 text-sm text-gray-900">${formatDate(transaction.date)}</td>
+                    <td class="py-3 px-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            transaction.type === 'income' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                        }">
+                            ${translations[currentLanguage][transaction.type]}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-900">${translations[currentLanguage][transaction.category] || transaction.category}</td>
+                    <td class="py-3 px-4 text-sm font-medium ${
+                        transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                    }">
+                        ${transaction.type === 'income' ? '+' : '-'}${formatCurrency(transaction.amount)}
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-500">${transaction.note || '-'}</td>
+                    <td class="py-3 px-4">
+                        <button onclick="deleteTransaction(${transaction.id})" class="text-red-600 hover:text-red-800 text-sm font-medium">
+                            ${translations[currentLanguage].delete}
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString(currentLanguage === 'tr' ? 'tr-TR' : 
+                                         currentLanguage === 'de' ? 'de-DE' :
+                                         currentLanguage === 'mk' ? 'mk-MK' : 'en-US');
+        }
+
+        function deleteTransaction(id) {
+            if (confirm(translations[currentLanguage].confirmDelete)) {
+                transactions = transactions.filter(t => t.id !== id);
+                saveTransactions();
+                updateUI();
+                updateCharts();
+                updateFilterCategories();
+                generateSmartSuggestions();
+            }
+        }
+
+        function initializeCharts() {
+            // Expense Pie Chart
+            const pieCtx = document.getElementById('expensePieChart').getContext('2d');
+            expensePieChart = new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#3B82F6', '#EF4444', '#10B981', '#F59E0B',
+                            '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Weekly Bar Chart
+            const barCtx = document.getElementById('weeklyBarChart').getContext('2d');
+            weeklyBarChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: translations[currentLanguage].weeklySpending,
+                        data: [],
+                        backgroundColor: '#3B82F6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCharts() {
+            // Update Expense Pie Chart
+            const expensesByCategory = {};
+            transactions
+                .filter(t => t.type === 'expense')
+                .forEach(t => {
+                    expensesByCategory[t.category] = (expensesByCategory[t.category] || 0) + t.amount;
+                });
+
+            const pieLabels = Object.keys(expensesByCategory).map(cat => translations[currentLanguage][cat]);
+            const pieData = Object.values(expensesByCategory);
+
+            expensePieChart.data.labels = pieLabels;
+            expensePieChart.data.datasets[0].data = pieData;
+            expensePieChart.update();
+
+            // Update Weekly Bar Chart
+            const weeklyData = getWeeklySpending();
+            weeklyBarChart.data.labels = weeklyData.labels;
+            weeklyBarChart.data.datasets[0].data = weeklyData.data;
+            weeklyBarChart.data.datasets[0].label = translations[currentLanguage].weeklySpending;
+            weeklyBarChart.update();
+        }
+
+        function getWeeklySpending() {
+            const weeks = {};
+            const today = new Date();
+            
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - (i * 7));
+                const weekStart = new Date(date);
+                weekStart.setDate(date.getDate() - date.getDay());
+                const weekKey = weekStart.toISOString().split('T')[0];
+                weeks[weekKey] = 0;
+            }
+
+            transactions
+                .filter(t => t.type === 'expense')
+                .forEach(t => {
+                    const transactionDate = new Date(t.date);
+                    const weekStart = new Date(transactionDate);
+                    weekStart.setDate(transactionDate.getDate() - transactionDate.getDay());
+                    const weekKey = weekStart.toISOString().split('T')[0];
+                    
+                    if (weeks.hasOwnProperty(weekKey)) {
+                        weeks[weekKey] += t.amount;
+                    }
+                });
+
+            return {
+                labels: Object.keys(weeks).map(date => {
+                    const d = new Date(date);
+                    return `${d.getMonth() + 1}/${d.getDate()}`;
+                }),
+                data: Object.values(weeks)
+            };
+        }
+
+        function generateSmartSuggestions() {
+            const container = document.getElementById('suggestionsContainer');
+            container.innerHTML = '';
+
+            const suggestions = [];
+            
+            // Weekly spending comparison
+            const weeklyData = getWeeklySpending();
+            if (weeklyData.data.length >= 2) {
+                const thisWeek = weeklyData.data[weeklyData.data.length - 1];
+                const lastWeek = weeklyData.data[weeklyData.data.length - 2];
+                if (lastWeek > 0) {
+                    const change = ((thisWeek - lastWeek) / lastWeek * 100).toFixed(0);
+                    if (Math.abs(change) > 5) {
+                        const direction = change > 0 ? 'more' : 'less';
+                        suggestions.push({
+                            icon: change > 0 ? '📈' : '📉',
+                            text: `You spent ${Math.abs(change)}% ${direction} than last week.`,
+                            color: change > 0 ? 'text-red-600' : 'text-green-600'
+                        });
+                    }
+                }
+            }
+
+            // Category analysis
+            const expensesByCategory = {};
+            const totalExpenses = transactions
+                .filter(t => t.type === 'expense')
+                .reduce((sum, t) => {
+                    expensesByCategory[t.category] = (expensesByCategory[t.category] || 0) + t.amount;
+                    return sum + t.amount;
+                }, 0);
+
+            if (totalExpenses > 0) {
+                Object.entries(expensesByCategory).forEach(([category, amount]) => {
+                    const percentage = (amount / totalExpenses * 100).toFixed(0);
+                    if (percentage > 30) {
+                        suggestions.push({
+                            icon: '⚠️',
+                            text: `${translations[currentLanguage][category]} expenses are ${percentage}% of your total spending.`,
+                            color: 'text-orange-600'
+                        });
+                    }
+                });
+            }
+
+            // Balance suggestion
+            const totalIncome = transactions
+                .filter(t => t.type === 'income')
+                .reduce((sum, t) => sum + t.amount, 0);
+            
+            const balance = totalIncome - totalExpenses;
+            if (balance < 0) {
+                suggestions.push({
+                    icon: '💰',
+                    text: 'Your expenses exceed your income. Consider reviewing your spending.',
+                    color: 'text-red-600'
+                });
+            } else if (balance > totalIncome * 0.2) {
+                suggestions.push({
+                    icon: '🎯',
+                    text: 'Great job! You\'re saving more than 20% of your income.',
+                    color: 'text-green-600'
+                });
+            }
+
+            // Default message if no suggestions
+            if (suggestions.length === 0) {
+                suggestions.push({
+                    icon: '📊',
+                    text: 'Keep tracking your expenses to get personalized insights!',
+                    color: 'text-blue-600'
+                });
+            }
+
+            // Render suggestions
+            suggestions.forEach(suggestion => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center space-x-3 p-3 bg-gray-50 rounded-lg';
+                div.innerHTML = `
+                    <span class="text-xl">${suggestion.icon}</span>
+                    <span class="text-sm ${suggestion.color} font-medium">${suggestion.text}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9910d95dd6bcd0d2',t:'MTc2MDg4MjkyMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
